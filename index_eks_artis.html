@@ -1,0 +1,300 @@
+<title>Eks-Artış</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Kira artış oranı hesaplama: mevcut kiranı ve yenileme ayını gir, TÜFE 12 aylık ortalamasına göre yasal üst sınırla yeni kiranı hemen gör.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: üstte hesap kartı (giriş solda/üstte, sonuç makbuz gibi altta), altında aylık oran tablosu ve kısa açıklamalar */
+:root {
+  --bg: #f2f5f4;
+  --surface: #ffffff;
+  --ink: #15211f;
+  --muted: #5f6f6b;
+  --line: #d5dedb;
+  --accent: #1b6b55;
+  --accent-ink: #ffffff;
+  --accent-soft: #e2f1eb;
+  --warn: #9a5b00;
+  --warn-soft: #fbf0dc;
+  --bar: #9cc9b8;
+  --mark: #e0701b;
+  --f-display: "Unbounded", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Figtree", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1513; --surface: #16201d; --ink: #e6efec; --muted: #94a6a0; --line: #26332f;
+  --accent: #4fc39f; --accent-ink: #06130f; --accent-soft: #15322a; --warn: #f0b75a; --warn-soft: #33270f; --bar: #2f6b58; --mark: #ff9a4d;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0e1513; --surface: #16201d; --ink: #e6efec; --muted: #94a6a0; --line: #26332f;
+  --accent: #4fc39f; --accent-ink: #06130f; --accent-soft: #15322a; --warn: #f0b75a; --warn-soft: #33270f; --bar: #2f6b58; --mark: #ff9a4d;
+  color-scheme: dark }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 56px;
+}
+.wrap { max-width: 640px; margin: 0 auto; display: grid; gap: 28px; }
+.logo { font-family: var(--f-display); font-weight: 700; font-size: 1.15rem; letter-spacing: -0.03em; margin-bottom: 14px; }
+.logo .e { color: var(--accent); }
+.logo .s { color: var(--mark); }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(1.5rem, 6vw, 2rem); letter-spacing: -0.03em; line-height: 1.15; margin: 0; text-wrap: balance; }
+.lead { margin: 6px 0 0; color: var(--muted); max-width: 52ch; }
+h2 { font-family: var(--f-display); font-weight: 500; font-size: 1.05rem; margin: 0; letter-spacing: -0.01em; }
+
+.calc { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+.inputs { padding: 18px; display: grid; gap: 14px; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); }
+.money { position: relative; }
+.money input {
+  width: 100%; font: inherit; font-family: var(--f-display); font-weight: 700; font-size: 1.6rem;
+  color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: 12px;
+  padding: 10px 52px 10px 14px; font-variant-numeric: tabular-nums;
+}
+.money span { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 700; }
+select, .custom input {
+  width: 100%; font: inherit; font-weight: 600; color: var(--ink); background: var(--bg);
+  border: 1.5px solid var(--line); border-radius: 12px; padding: 11px 12px;
+}
+input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.toggle { display: flex; align-items: center; gap: 8px; font-size: .92rem; color: var(--muted); cursor: pointer; }
+.toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
+.custom { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 8px; }
+
+.receipt { background: var(--accent-soft); padding: 18px; display: grid; gap: 12px; border-top: 1px dashed var(--line); }
+.big { display: grid; gap: 2px; }
+.big .label { color: var(--accent); }
+.big output { font-family: var(--f-display); font-weight: 700; font-size: clamp(2rem, 10vw, 2.8rem); letter-spacing: -0.03em; line-height: 1.1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.lines { display: grid; gap: 6px; font-size: .95rem; }
+.line { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid color-mix(in srgb, var(--accent) 18%, transparent); padding-bottom: 6px; }
+.line:last-child { border-bottom: 0; padding-bottom: 0; }
+.line span:first-child { color: var(--muted); }
+.line b { font-variant-numeric: tabular-nums; text-align: right; }
+.note { font-size: .86rem; padding: 10px 12px; border-radius: 10px; background: var(--warn-soft); color: var(--warn); margin: 0; }
+.copy { justify-self: start; font: inherit; font-weight: 700; font-size: .9rem; padding: 8px 14px; border-radius: 10px; border: 0; background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.rates { display: grid; gap: 10px; }
+.rates p { margin: 0; color: var(--muted); font-size: .92rem; }
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: .95rem; font-variant-numeric: tabular-nums; }
+th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; }
+tr:last-child td { border-bottom: 0; }
+td.r { text-align: right; font-weight: 700; }
+th:nth-child(1) { width: 40%; } th:nth-child(2) { width: 30%; } td.barcell, th.barcell { width: 30%; }
+.bar { height: 8px; border-radius: 4px; background: var(--bar); }
+tr.sel td { background: var(--accent-soft); }
+tr.pending td { color: var(--muted); font-style: italic; }
+
+.faq { display: grid; gap: 8px; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+summary { cursor: pointer; font-weight: 700; }
+details p { margin: 8px 0 0; color: var(--muted); max-width: 62ch; }
+footer { font-size: .8rem; color: var(--muted); display: grid; gap: 4px; }
+footer a { color: inherit; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="logo" aria-label="eks-artış"><span class="e">eks</span>-artı<span class="s">ş</span></div>
+    <h1>Kira artış hesaplama</h1>
+    <p class="lead">Mevcut kiranı ve sözleşmenin yenilendiği ayı seç, TÜFE 12 aylık ortalamasına göre yasal üst sınırla yeni kiranı gör.</p>
+  </header>
+
+  <section class="calc" aria-label="Hesaplayıcı">
+    <div class="inputs">
+      <div class="field">
+        <label class="label" for="rent">Mevcut aylık kira</label>
+        <div class="money"><input id="rent" inputmode="numeric" autocomplete="off" value="20.000"><span>TL</span></div>
+      </div>
+      <div class="field">
+        <label class="label" for="month">Sözleşme yenileme ayı</label>
+        <select id="month"></select>
+      </div>
+      <div class="field" id="estBox" hidden>
+        <label class="label" for="est">Tahmini oran (isteğe bağlı)</label>
+        <div class="custom"><input id="est" inputmode="decimal" autocomplete="off"><span>%</span></div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="useCustom"> Ev sahibiyle farklı bir oranda anlaştık</label>
+      <div class="custom" id="customBox" hidden>
+        <input id="custom" inputmode="decimal" placeholder="Örn. 25" aria-label="Anlaşılan artış oranı">
+        <span>%</span>
+      </div>
+    </div>
+    <div class="receipt" aria-live="polite">
+      <div class="big"><span class="label">Yeni aylık kira</span><output id="newRent">–</output></div>
+      <div class="lines">
+        <div class="line"><span>Uygulanan oran</span><b id="rate">–</b></div>
+        <div class="line"><span>Aylık artış</span><b id="diff">–</b></div>
+        <div class="line"><span>Yıllık toplam fark</span><b id="year">–</b></div>
+        <div class="line"><span>Oranın kaynağı</span><b id="src">–</b></div>
+      </div>
+      <p class="note" id="note" hidden></p>
+      <button type="button" class="copy" id="copy">Sonucu kopyala</button>
+    </div>
+  </section>
+
+  <section class="rates">
+    <h2>Aylara göre kira artış oranları</h2>
+    <p>Her ayın 3'ünde TÜİK bir önceki ayın enflasyonunu açıklar. Açıklanan 12 aylık ortalama, o ay yenilenen sözleşmeler için üst sınırdır.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Yenileme ayı</th><th>Oran</th><th class="barcell" aria-hidden="true"></th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="faq">
+    <h2>Sık sorulanlar</h2>
+    <details><summary>Kira artış oranı nasıl belirleniyor?</summary>
+      <p>Türk Borçlar Kanunu'na göre yenilenen kira yılında artış, bir önceki kira yılının TÜFE 12 aylık ortalama değişimini geçemez. Bu oran her ay TÜİK verisiyle güncellenir. Konut ve işyeri için aynı sınır geçerlidir.</p></details>
+    <details><summary>%25 sınırı hâlâ geçerli mi?</summary>
+      <p>Hayır. Konut kiralarındaki geçici %25 sınırı 1 Temmuz 2024'te sona erdi. Şu an tek sınır TÜFE 12 aylık ortalaması.</p></details>
+    <details><summary>Daha düşük bir oranda anlaşabilir miyiz?</summary>
+      <p>Evet. Yasal oran bir üst sınırdır. Taraflar daha düşük bir artışta anlaşabilir. Bunun için "farklı bir oranda anlaştık" kutusunu işaretleyip oranı girebilirsin.</p></details>
+    <details><summary>Sözleşmem ayın 1'inde ya da 2'sinde yenileniyor, hangi oran geçerli?</summary>
+      <p>O ayın oranı 3'ünde açıklandığı için yenileme tarihinde henüz bilinmiyor olabilir. Böyle durumlarda hangi oranın uygulanacağı konusunda sözleşmene bakmanı ya da bir hukukçuya danışmanı öneririz.</p></details>
+  </section>
+
+  <footer>
+    <span>Veri: TÜİK tüketici fiyat endeksi, 12 aylık ortalamalara göre değişim. Son güncelleme: <span id="updated"></span>.</span>
+    <span>Bu sayfa bilgilendirme amaçlıdır, hukuki tavsiye değildir.</span>
+  </footer>
+</div>
+
+<script id="data" type="application/json">
+{"guncelleme":"2026-10-03","oranlar":{
+"2025-01":56.35,"2025-02":53.83,"2025-03":51.26,"2025-04":48.73,"2025-05":45.80,"2025-06":43.23,
+"2025-07":41.13,"2025-08":39.62,"2025-09":38.36,"2025-10":37.15,"2025-11":35.91,"2025-12":34.88,
+"2026-01":33.98,"2026-02":33.39,"2026-03":32.82,"2026-04":32.43,"2026-05":32.24,"2026-06":32.03,
+"2026-07":31.90,"2026-08":31.79,"2026-09":31.49}}
+</script>
+<script>
+// "oranlar" anahtarı verinin ait olduğu ay (TÜİK referans ayı). O oran bir sonraki ayda açıklanır
+// ve o ay yenilenen sözleşmelere uygulanır: yenileme ayı = veri ayı + 1.
+const $ = id => document.getElementById(id);
+const AYLAR = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+const tl = n => n.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " TL";
+const pct = n => "%" + n.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const key = (y, m) => y + "-" + String(m).padStart(2, "0");
+const shift = (k, d) => { let [y, m] = k.split("-").map(Number); m += d; while (m > 12) { m -= 12; y++; } while (m < 1) { m += 12; y--; } return key(y, m); };
+const label = k => { const [y, m] = k.split("-").map(Number); return AYLAR[m - 1] + " " + y; };
+
+let DATA = JSON.parse($("data").textContent);
+let renewals = [];   // [{k, rate|null}]
+
+function build() {
+  const dataKeys = Object.keys(DATA.oranlar).sort();
+  const latestData = dataKeys[dataKeys.length - 1];
+  const now = new Date(); const thisMonth = key(now.getFullYear(), now.getMonth() + 1);
+  const lastRenewal = [shift(latestData, 1), thisMonth].sort().pop();
+  renewals = [];
+  for (let k = shift(dataKeys[0], 1); k <= lastRenewal; k = shift(k, 1)) {
+    const r = DATA.oranlar[shift(k, -1)];
+    renewals.push({ k, rate: r === undefined ? null : r });
+  }
+  const sel = $("month"); const prev = sel.value; sel.textContent = "";
+  [...renewals].reverse().forEach(o => {
+    const opt = document.createElement("option"); opt.value = o.k;
+    opt.textContent = label(o.k) + (o.rate === null ? " (henüz açıklanmadı)" : " · " + pct(o.rate));
+    sel.append(opt);
+  });
+  sel.value = renewals.some(o => o.k === prev) ? prev : (renewals.some(o => o.k === thisMonth) ? thisMonth : renewals[renewals.length - 1].k);
+  const [uy, um, ud] = DATA.guncelleme.split("-").map(Number);
+  $("updated").textContent = ud + " " + AYLAR[um - 1] + " " + uy;
+  drawTable();
+}
+
+function latestKnown() { for (let i = renewals.length - 1; i >= 0; i--) if (renewals[i].rate !== null) return renewals[i]; }
+
+function parseMoney(s) {
+  const t = String(s).replace(/[^\d,]/g, "").replace(",", ".");
+  const n = parseFloat(t); return isFinite(n) ? n : 0;
+}
+
+function calc() {
+  const rent = parseMoney($("rent").value);
+  const k = $("month").value; const o = renewals.find(x => x.k === k);
+  const note = $("note"); note.hidden = true;
+  const pending = !!o && o.rate === null;
+  $("estBox").hidden = !pending || $("useCustom").checked;
+  if (pending) { const l = latestKnown(); $("est").placeholder = "Son açıklanan: " + l.rate.toLocaleString("tr-TR"); }
+  let rate, src;
+  if ($("useCustom").checked) {
+    rate = parseFloat(String($("custom").value).replace(",", "."));
+    src = "Anlaşılan oran";
+    const legal = o && o.rate !== null ? o.rate : null;
+    if (isFinite(rate) && legal !== null && rate > legal) {
+      note.hidden = false;
+      note.textContent = "Girdiğin oran, " + label(k) + " için yasal üst sınır olan " + pct(legal) + " oranından yüksek.";
+    }
+  } else if (o && o.rate !== null) {
+    rate = o.rate; src = label(shift(k, -1)) + " TÜFE";
+  } else {
+    const l = latestKnown();
+    const est = parseFloat(String($("est").value).replace(",", "."));
+    note.hidden = false;
+    if (isFinite(est) && est >= 0) {
+      rate = est; src = "Senin tahminin";
+      note.textContent = label(k) + " oranı henüz açıklanmadı. Senin girdiğin " + pct(rate) + " tahminle hesaplandı; kesin oran ayın 3'ünde belli olacak.";
+    } else {
+      rate = l.rate; src = label(shift(l.k, -1)) + " TÜFE";
+      note.textContent = label(k) + " oranı ayın 3'ünde TÜİK tarafından açıklanacak. Şimdilik son açıklanan oranla (" + pct(rate) + ") hesaplandı. Bir tahminin varsa yukarıya girebilirsin.";
+    }
+  }
+  drawTable();
+  if (!rent || !isFinite(rate)) { ["newRent","rate","diff","year"].forEach(id => $(id).textContent = "–"); $("src").textContent = src || "–"; return; }
+  const yeni = Math.round(rent * (1 + rate / 100) * 100) / 100;
+  $("newRent").textContent = tl(yeni);
+  $("rate").textContent = pct(rate);
+  $("diff").textContent = "+" + tl(yeni - rent);
+  $("year").textContent = "+" + tl((yeni - rent) * 12);
+  $("src").textContent = src;
+}
+
+function drawTable() {
+  const tb = $("tbody"); tb.textContent = "";
+  const max = Math.max(...renewals.filter(o => o.rate !== null).map(o => o.rate));
+  [...renewals].reverse().forEach(o => {
+    const tr = document.createElement("tr");
+    if (o.k === $("month").value) tr.className = "sel";
+    if (o.rate === null) tr.classList.add("pending");
+    const a = document.createElement("td"); a.textContent = label(o.k);
+    const b = document.createElement("td"); b.className = "r"; b.textContent = o.rate === null ? "3'ünde açıklanacak" : pct(o.rate);
+    const c = document.createElement("td"); c.className = "barcell"; c.setAttribute("aria-hidden", "true");
+    if (o.rate !== null) { const bar = document.createElement("div"); bar.className = "bar"; bar.style.width = (o.rate / max * 100).toFixed(1) + "%"; c.append(bar); }
+    tr.append(a, b, c); tb.append(tr);
+  });
+}
+
+$("rent").addEventListener("input", e => {
+  const el = e.target; const digits = el.value.replace(/[^\d]/g, "");
+  el.value = digits ? Number(digits).toLocaleString("tr-TR") : "";
+  calc();
+});
+$("month").addEventListener("change", calc);
+$("useCustom").addEventListener("change", () => { $("customBox").hidden = !$("useCustom").checked; calc(); if ($("useCustom").checked) $("custom").focus(); });
+$("custom").addEventListener("input", calc);
+$("est").addEventListener("input", calc);
+$("copy").addEventListener("click", async () => {
+  const txt = "Mevcut kira: " + tl(parseMoney($("rent").value)) + "\nYenileme: " + label($("month").value) +
+    "\nUygulanan oran: " + $("rate").textContent + "\nYeni kira: " + $("newRent").textContent;
+  const b = $("copy");
+  try { await navigator.clipboard.writeText(txt); b.textContent = "Kopyalandı"; }
+  catch { b.textContent = "Kopyalanamadı"; }
+  setTimeout(() => b.textContent = "Sonucu kopyala", 1600);
+});
+
+build(); calc();
+// GitHub'da yayındayken otomatik güncellenen oranlar.json dosyası varsa onu kullan
+fetch("oranlar.json", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(j => {
+  if (j && j.oranlar) { DATA = j; build(); calc(); }
+}).catch(() => {});
+</script>
